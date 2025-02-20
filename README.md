@@ -3,8 +3,9 @@ Phishing is a cyber-attack where attackers attempt to trick individuals into rev
 A phishing link scanner is a cybersecurity tool that helps detect and analyze suspicious URLs to determine whether they lead to phishing or malicious websites.
 
 How It Works
-Fetches the latest phishing links from OpenPhish.
-Extracts the domain from the input URL.
-Check if the domain exists in the phishing database.
-Uses regex to detect suspicious patterns.
-Prints whether the URL is safe or a potential phishing attempt.
+
+1. Fetches the latest phishing links from OpenPhish.
+2. Extract the domain from the input URL.
+3. Check if the domain exists in the phishing database.
+4. Use regex to detect suspicious patterns.
+5. Prints whether the URL is safe or a potential phishing attempt.
