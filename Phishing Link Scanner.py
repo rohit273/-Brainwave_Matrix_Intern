@@ -1,65 +1,65 @@
 import re
 import requests
-import urllib.parse
+from urllib.parse import urlparse
 
-def is_suspicious_url(url):
-    """
-    Checks for common phishing patterns in URLs.
-    """
-    phishing_patterns = [
-        r"free.*",  # Domains offering free stuff
-        r".*account.*verify.*",  # Verification scams
-        r".*login.*",  # Fake login pages
-        r".*bank.*",  # Banking scams
-        r".*paypal.*",  # PayPal phishing
-        r".*secure.*",  # Fake secure messages
+# OpenPhish database URL
+OPENPHISH_FEED = "https://openphish.com/feed.txt"
+
+# Function to fetch the latest phishing URLs from OpenPhish
+def get_phishing_list():
+    try:
+        response = requests.get(OPENPHISH_FEED, timeout=10)
+        if response.status_code == 200:
+            return set(response.text.split("\n"))
+        else:
+            print("Error fetching phishing database.")
+            return set()
+    except requests.exceptions.RequestException:
+        print("Error connecting to OpenPhish.")
+        return set()
+
+# Function to extract domain from URL
+def get_domain(url):
+    parsed_url = urlparse(url)
+    return parsed_url.netloc
+
+# Heuristic-based detection of phishing
+def is_suspicious(url):
+    suspicious_patterns = [
+        r"(?:login|account|verify|secure|update|bank|paypal)[\W]",  # Suspicious keywords
+        r"[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/[a-zA-Z0-9]{15,}",  # Long random paths
+        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}",  # IP-based URLs
+        r"https?://[^\s]*@.*",  # URLs with '@' symbol
     ]
     
-    for pattern in phishing_patterns:
-        if re.search(pattern, url, re.IGNORECASE):
+    for pattern in suspicious_patterns:
+        if re.search(pattern, url):
             return True
     return False
 
-def check_google_safe_browsing(api_key, url):
-    """
-    Checks the URL against Google's Safe Browsing API.
-    """
-    google_api_url = "https://safebrowsing.googleapis.com/v4/threatMatches:find"
-    payload = {
-        "client": {"clientId": "your_client_id", "clientVersion": "1.0"},
-        "threatInfo": {
-            "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING"],
-            "platformTypes": ["ANY_PLATFORM"],
-            "threatEntryTypes": ["URL"],
-            "threatEntries": [{"url": url}]
-        }
-    }
-    headers = {"Content-Type": "application/json"}
-    response = requests.post(f"{google_api_url}?key={api_key}", json=payload, headers=headers)
+# Main function to check a URL
+def check_url(url, phishing_db):
+    domain = get_domain(url)
+    if url in phishing_db or domain in phishing_db:
+        return f"⚠️ WARNING: {url} is a known phishing site!"
     
-    if response.status_code == 200:
-        result = response.json()
-        if "matches" in result:
-            return True  # URL is flagged as unsafe
-    return False
+    if is_suspicious(url):
+        return f"⚠️ ALERT: {url} has suspicious characteristics."
+    
+    return f"✅ SAFE: {url} appears to be safe."
 
-def main():
-    url = input("Enter URL to check: ").strip()
-    parsed_url = urllib.parse.urlparse(url)
-    
-    if not parsed_url.scheme:
-        url = "http://" + url  # Ensure proper formatting
-    
-    print("\nChecking URL...")
-    
-    if is_suspicious_url(url):
-        print("[WARNING] The URL contains phishing-related patterns!")
-    
-    api_key = "YOUR_GOOGLE_SAFE_BROWSING_API_KEY"
-    if check_google_safe_browsing(api_key, url):
-        print("[DANGER] This URL is flagged as unsafe by Google Safe Browsing!")
-    else:
-        print("[SAFE] The URL is not flagged in Google Safe Browsing.")
-    
+# Example usage
 if __name__ == "__main__":
-    main()
+    phishing_db = get_phishing_list()
+    
+    test_urls = [
+        "https://paypal.secure-login.com",
+        "http://192.168.1.1/login",
+        "https://www.google.com",
+        "https://bank-update-login.com/verify",
+        "https://www.instagram.com/",
+        "facebookztv[.]com",
+    ]
+    
+    for url in test_urls:
+        print(check_url(url, phishing_db))
