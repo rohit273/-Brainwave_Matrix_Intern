@@ -3,7 +3,7 @@ Phishing is a cyber-attack where attackers attempt to trick individuals into rev
 A phishing link scanner is a cybersecurity tool that helps detect and analyze suspicious URLs to determine whether they lead to phishing or malicious websites.
 
 Requirements
-You need to install requests for fetching the OpenPhish database:
+1. You need to install requests for fetching the OpenPhish database:
 
 How It Works
 
